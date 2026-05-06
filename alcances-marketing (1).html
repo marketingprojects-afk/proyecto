@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alcances por Marca — Equipo de Marketing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
+    --text: #1a1a18; --text2: #6b6b66; --text3: #a8a8a2;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  #root { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  button { font-family: inherit; cursor: pointer; transition: background 0.15s; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  input, textarea { font-family: inherit; font-size: 13px; color: var(--text); background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; width: 100%; outline: none; transition: border-color 0.15s; }
+  input:focus, textarea:focus { border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.12); }
+  textarea { resize: vertical; line-height: 1.5; }
+  p { margin: 0; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .nav-btn { padding: 6px 14px; font-size: 13px; border-radius: var(--radius); border: 0.5px solid var(--border); background: transparent; color: var(--text2); display: inline-flex; align-items: center; gap: 6px; }
+  .nav-btn:hover { background: var(--bg2); }
+  .nav-btn.active { background: var(--bg2); border-color: var(--border2); color: var(--text); font-weight: 500; }
+  .member-btn { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0.5px solid var(--border); background: transparent; border-radius: var(--radius); text-align: left; width: 100%; }
+  .member-btn:hover { background: var(--bg2); }
+  .member-btn.active { background: var(--bg2); border-color: var(--border2); }
+  .avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; flex-shrink: 0; }
+  .pct-bar-wrap { height: 6px; background: var(--bg3); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .pct-bar { height: 100%; border-radius: 99px; }
+  .scroll-sidebar { max-height: calc(100vh - 180px); overflow-y: auto; padding-right: 2px; }
+  .scroll-sidebar::-webkit-scrollbar { width: 4px; }
+  .scroll-sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  @media (max-width: 620px) {
+    .edit-grid { grid-template-columns: 1fr !important; }
+    .team-grid { grid-template-columns: 1fr !important; }
+    .stat-grid { grid-template-columns: 1fr !important; }
+    .scroll-sidebar { max-height: 180px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const BRANDS = [
+  { id:"gc", name:"Global Cruises LLC",    short:"Global Cruises", color:"#185FA5", bg:"#E6F1FB", text:"#0C447C", icon:"ti-ship"  },
+  { id:"kp", name:"KUZÁ PARK (GLOBAL MX)", short:"KUZÁ PARK",     color:"#0F6E56", bg:"#E1F5EE", text:"#085041", icon:"ti-trees" },
+  { id:"ag", name:"Adventugram",           short:"Adventugram",    color:"#854F0B", bg:"#FAEEDA", text:"#633806", icon:"ti-map-2" },
+];
+
+const AVATAR_COLORS = [
+  {bg:"#EEEDFE",text:"#3C3489"},{bg:"#E1F5EE",text:"#085041"},
+  {bg:"#FAECE7",text:"#712B13"},{bg:"#E6F1FB",text:"#0C447C"},
+  {bg:"#FAEEDA",text:"#633806"},{bg:"#EAF3DE",text:"#27500A"},
+];
+
+const getInitials = (name) => {
+  if (!name.trim()) return "?";
+  return name.trim().split(" ").slice(0,2).map(w=>w[0].toUpperCase()).join("");
+};
+
+const pctNum = (s) => parseInt((s||"0").replace(/[^0-9]/g,"")) || 0;
+
+const SEED_DATA = [{"id":1,"name":"Ariel Castro","role":"DIRECTOR DE MARKETING","brands":{"gc":{"active":true,"scope":"10%"},"kp":{"active":true,"scope":"80%"},"ag":{"active":true,"scope":"10%"}}},{"id":2,"name":"Angelica Maria Daza Castilla","role":"COMERCIAL B2B LATAM","brands":{"gc":{"active":true,"scope":"5%"},"kp":{"active":true,"scope":"35%"},"ag":{"active":true,"scope":"60%"}}},{"id":3,"name":"Eliana Margarita Cabarcas Romero","role":"PROJECT SPECIALIST","brands":{"gc":{"active":true,"scope":"30%"},"kp":{"active":true,"scope":"60%"},"ag":{"active":true,"scope":"10%"}}},{"id":4,"name":"Juan David Orozco Rojas","role":"ART LEAD","brands":{"gc":{"active":true,"scope":"30%"},"kp":{"active":true,"scope":"60%"},"ag":{"active":true,"scope":"10%"}}},{"id":5,"name":"Daniela Marcela Padila","role":"GRAPHIC DESIGNER","brands":{"gc":{"active":true,"scope":"40%"},"kp":{"active":true,"scope":"50%"},"ag":{"active":true,"scope":"10%"}}},{"id":6,"name":"Abraham Juarez","role":"ART LEAD","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":7,"name":"Anahi Lara","role":"GRAPHIC DESIGNER","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":8,"name":"Erika Ardila","role":"CONTENT CREATOR","brands":{"gc":{"active":true,"scope":"10%"},"kp":{"active":true,"scope":"90%"},"ag":{"active":false,"scope":""}}},{"id":9,"name":"Rafael Marmolejo","role":"CONTENT CREATOR","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":10,"name":"Carlos Javier Alcalá","role":"WEB & UX","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"90%"},"ag":{"active":true,"scope":"10%"}}},{"id":11,"name":"Nuevo - AD Traficker","role":"AD TRAFICKER","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":12,"name":"Nuevo - Brand Lead","role":"BRAND LEAD","brands":{"gc":{"active":true,"scope":"10%"},"kp":{"active":true,"scope":"80%"},"ag":{"active":true,"scope":"10%"}}},{"id":13,"name":"Nuevo - Automation Specialist","role":"AUTOMATION SPECIALIST","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":14,"name":"Maria Angelica Chima","role":"OTAS LEAD","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"90%"},"ag":{"active":true,"scope":"10%"}}},{"id":15,"name":"Marian Mercado","role":"COORDINADOR DE CONTACT CENTER","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}},{"id":16,"name":"Bryan Puello","role":"AUDIOVISUAL LEAD","brands":{"gc":{"active":true,"scope":"30%"},"kp":{"active":true,"scope":"60%"},"ag":{"active":true,"scope":"10%"}}},{"id":17,"name":"Andrés Cuadros Garcia","role":"PROFESIONAL DE DISEÑO Y AUDIOVISUALES","brands":{"gc":{"active":true,"scope":"30%"},"kp":{"active":true,"scope":"60%"},"ag":{"active":true,"scope":"10%"}}},{"id":18,"name":"Eduardo Francisco May","role":"COORDINADOR DE AUDIOVISUALES","brands":{"gc":{"active":false,"scope":""},"kp":{"active":true,"scope":"100%"},"ag":{"active":false,"scope":""}}}];
+
+function App() {
+  const [members, setMembers] = useState(() => {
+    try { const s = localStorage.getItem("mkt-alcances-v1"); return s ? JSON.parse(s) : SEED_DATA; } catch { return SEED_DATA; }
+  });
+  const [view, setView]       = useState("team");
+  const [editIdx, setEditIdx] = useState(0);
+  const [saved, setSaved]     = useState(false);
+  const [brandView, setBrandView] = useState("gc");
+
+  const save = (data) => {
+    try { localStorage.setItem("mkt-alcances-v1", JSON.stringify(data)); setSaved(true); setTimeout(()=>setSaved(false),1600); } catch {}
+  };
+
+  const updateMember = (idx, field, val) =>
+    setMembers(prev => { const n=[...prev]; n[idx]={...n[idx],[field]:val}; return n; });
+  const updateBrand = (idx, bid, field, val) =>
+    setMembers(prev => { const n=[...prev]; n[idx]={...n[idx],brands:{...n[idx].brands,[bid]:{...n[idx].brands[bid],[field]:val}}}; return n; });
+
+  const cur = members[editIdx] || members[0];
+  const filledCount = members.filter(m=>m.name.trim()).length;
+  const brandStats = BRANDS.map(b=>({...b, members:members.filter(m=>m.name.trim()&&m.brands[b.id]?.active)}));
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{marginBottom:"1.5rem"}}>
+        <p style={{fontSize:11,fontWeight:500,letterSpacing:"0.08em",color:"var(--text2)",textTransform:"uppercase",marginBottom:4}}>Equipo de Marketing</p>
+        <h1 style={{fontSize:24,fontWeight:600,marginBottom:6,color:"var(--text)"}}>Alcances por marca</h1>
+        <p style={{fontSize:13,color:"var(--text2)"}}>{filledCount} integrantes · 3 marcas</p>
+      </div>
+
+      {/* Nav */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:"1.5rem",paddingBottom:"1.25rem",borderBottom:"0.5px solid var(--border)"}}>
+        {[{id:"team",label:"Por persona",icon:"ti-users"},{id:"brands",label:"Por marca",icon:"ti-flag"},{id:"edit",label:"Editar",icon:"ti-pencil"}].map(tab=>(
+          <button key={tab.id} className={`nav-btn${view===tab.id?" active":""}`} onClick={()=>setView(tab.id)}>
+            <i className={`ti ${tab.icon}`} style={{fontSize:14}} />{tab.label}
+          </button>
+        ))}
+        <button onClick={()=>save(members)} style={{
+          marginLeft:"auto",padding:"6px 14px",fontSize:13,fontFamily:"inherit",
+          borderRadius:"var(--radius)",border:"0.5px solid var(--border)",cursor:"pointer",
+          background:saved?"#EAF3DE":"transparent", color:saved?"#27500A":"var(--text2)",
+          display:"inline-flex",alignItems:"center",gap:6,transition:"background 0.2s,color 0.2s",
+        }}>
+          <i className={`ti ${saved?"ti-check":"ti-device-floppy"}`} style={{fontSize:14}} />
+          {saved?"Guardado":"Guardar cambios"}
+        </button>
+      </div>
+
+      {/* ── TEAM VIEW ── */}
+      {view==="team" && (
+        <div>
+          <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:"1.5rem"}}>
+            {brandStats.map(b=>(
+              <div key={b.id} style={{background:b.bg,borderRadius:"var(--radius)",padding:"10px 14px"}}>
+                <p style={{fontSize:11,fontWeight:500,color:b.text,display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                  <i className={`ti ${b.icon}`} style={{fontSize:13}} />{b.short}
+                </p>
+                <p style={{fontSize:26,fontWeight:700,color:b.text}}>{b.members.length}</p>
+                <p style={{fontSize:11,color:b.color}}>personas asignadas</p>
+              </div>
+            ))}
+          </div>
+          <div className="team-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+            {members.filter(m=>m.name.trim()).map(m=>{
+              const idx=members.indexOf(m);
+              const av=AVATAR_COLORS[idx%AVATAR_COLORS.length];
+              const active=BRANDS.filter(b=>m.brands[b.id]?.active);
+              return (
+                <div key={m.id} className="card">
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:"0.75rem"}}>
+                    <div className="avatar" style={{width:38,height:38,background:av.bg,color:av.text,fontSize:13,flexShrink:0}}>{getInitials(m.name)}</div>
+                    <div style={{overflow:"hidden"}}>
+                      <p style={{fontSize:14,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name}</p>
+                      <p style={{fontSize:11,color:"var(--text2)",letterSpacing:"0.02em"}}>{m.role}</p>
+                    </div>
+                  </div>
+                  {active.length===0 ? (
+                    <p style={{fontSize:12,color:"var(--text3)",fontStyle:"italic"}}>Sin marcas asignadas</p>
+                  ) : active.map(b=>{
+                    const pct=pctNum(m.brands[b.id]?.scope);
+                    return (
+                      <div key={b.id} style={{marginBottom:8}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <p style={{fontSize:11,fontWeight:500,color:b.text,display:"flex",alignItems:"center",gap:4}}>
+                            <i className={`ti ${b.icon}`} style={{fontSize:11}} />{b.short}
+                          </p>
+                          <span style={{fontSize:12,fontWeight:600,color:b.color}}>{m.brands[b.id]?.scope||"—"}</span>
+                        </div>
+                        <div className="pct-bar-wrap">
+                          <div className="pct-bar" style={{width:`${pct}%`,background:b.color}} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── BRANDS VIEW ── */}
+      {view==="brands" && (
+        <div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:"1.25rem"}}>
+            {BRANDS.map(b=>(
+              <button key={b.id} onClick={()=>setBrandView(b.id)} style={{
+                padding:"7px 16px",fontSize:13,fontFamily:"inherit",cursor:"pointer",
+                borderRadius:"var(--radius)",border:"0.5px solid",
+                borderColor:brandView===b.id?b.color:"var(--border)",
+                background:brandView===b.id?b.bg:"transparent",
+                color:brandView===b.id?b.text:"var(--text2)",
+                fontWeight:brandView===b.id?600:400,
+                display:"inline-flex",alignItems:"center",gap:6,
+              }}>
+                <i className={`ti ${b.icon}`} style={{fontSize:14}} />{b.name}
+              </button>
+            ))}
+          </div>
+
+          {BRANDS.filter(b=>b.id===brandView).map(b=>{
+            const bMembers=members.filter(m=>m.name.trim()&&m.brands[b.id]?.active)
+              .sort((a,z)=>pctNum(z.brands[b.id]?.scope)-pctNum(a.brands[b.id]?.scope));
+            return (
+              <div key={b.id}>
+                <div style={{background:b.bg,border:`0.5px solid ${b.color}44`,borderRadius:"var(--radius-lg)",padding:"1.25rem",marginBottom:"1.25rem",display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:46,height:46,borderRadius:"var(--radius)",background:b.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <i className={`ti ${b.icon}`} style={{fontSize:22,color:"#fff"}} />
+                  </div>
+                  <div>
+                    <p style={{fontSize:20,fontWeight:700,color:b.text,marginBottom:2}}>{b.name}</p>
+                    <p style={{fontSize:13,color:b.color}}>{bMembers.length} integrante{bMembers.length!==1?"s":""} asignado{bMembers.length!==1?"s":""} · ordenados por % de dedicación</p>
+                  </div>
+                </div>
+
+                {bMembers.length===0 ? (
+                  <div style={{textAlign:"center",padding:"2rem",color:"var(--text3)",background:"var(--bg2)",borderRadius:"var(--radius-lg)"}}>
+                    <p style={{fontSize:14}}>Ningún integrante asignado a esta marca.</p>
+                  </div>
+                ) : bMembers.map(m=>{
+                  const idx=members.indexOf(m);
+                  const av=AVATAR_COLORS[idx%AVATAR_COLORS.length];
+                  const others=BRANDS.filter(ob=>ob.id!==b.id&&m.brands[ob.id]?.active);
+                  const pct=pctNum(m.brands[b.id]?.scope);
+                  return (
+                    <div key={m.id} className="card" style={{marginBottom:10,display:"grid",gridTemplateColumns:"auto 1fr auto",gap:14,alignItems:"center"}}>
+                      <div className="avatar" style={{width:40,height:40,background:av.bg,color:av.text,fontSize:13}}>{getInitials(m.name)}</div>
+                      <div>
+                        <p style={{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:1}}>{m.name}</p>
+                        <p style={{fontSize:11,color:"var(--text2)",marginBottom:6,letterSpacing:"0.02em"}}>{m.role}</p>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div className="pct-bar-wrap" style={{flex:1}}>
+                            <div className="pct-bar" style={{width:`${pct}%`,background:b.color}} />
+                          </div>
+                          <span style={{fontSize:13,fontWeight:700,color:b.color,minWidth:36,textAlign:"right"}}>{m.brands[b.id]?.scope||"—"}</span>
+                        </div>
+                      </div>
+                      {others.length>0 && (
+                        <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+                          <p style={{fontSize:10,color:"var(--text3)",marginBottom:2}}>También en</p>
+                          {others.map(ob=>(
+                            <span key={ob.id} style={{fontSize:11,padding:"2px 8px",background:ob.bg,color:ob.text,borderRadius:"var(--radius)",display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+                              <i className={`ti ${ob.icon}`} style={{fontSize:11}} />{ob.short} {m.brands[ob.id]?.scope}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── EDIT VIEW ── */}
+      {view==="edit" && (
+        <div className="edit-grid" style={{display:"grid",gridTemplateColumns:"210px 1fr",gap:"1.5rem"}}>
+          <div className="scroll-sidebar" style={{display:"flex",flexDirection:"column",gap:4}}>
+            {members.map((m,i)=>{
+              const bc=BRANDS.filter(b=>m.brands[b.id]?.active).length;
+              const av=AVATAR_COLORS[i%AVATAR_COLORS.length];
+              return (
+                <button key={m.id} className={`member-btn${editIdx===i?" active":""}`} onClick={()=>setEditIdx(i)}>
+                  <div className="avatar" style={{width:30,height:30,background:av.bg,color:av.text,fontSize:11}}>{m.name.trim()?getInitials(m.name):i+1}</div>
+                  <div style={{overflow:"hidden",flex:1}}>
+                    <p style={{fontSize:12,fontWeight:500,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name||`Persona ${i+1}`}</p>
+                    <p style={{fontSize:11,color:"var(--text2)"}}>{bc>0?`${bc} marca${bc>1?"s":""}`:"Sin marcas"}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="card">
+            <p style={{fontSize:12,color:"var(--text2)",fontWeight:500,marginBottom:"1rem"}}>Persona {editIdx+1} de 18</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:"1.25rem"}}>
+              <div>
+                <label style={{fontSize:12,color:"var(--text2)",display:"block",marginBottom:4}}>Nombre completo</label>
+                <input value={cur.name} onChange={e=>updateMember(editIdx,"name",e.target.value)} placeholder="Nombre" />
+              </div>
+              <div>
+                <label style={{fontSize:12,color:"var(--text2)",display:"block",marginBottom:4}}>Cargo / Rol</label>
+                <input value={cur.role} onChange={e=>updateMember(editIdx,"role",e.target.value)} placeholder="Cargo" />
+              </div>
+            </div>
+            <div style={{borderTop:"0.5px solid var(--border)",paddingTop:"1.25rem"}}>
+              <p style={{fontSize:13,fontWeight:500,color:"var(--text)",marginBottom:"0.75rem"}}>Alcance por marca</p>
+              {BRANDS.map(b=>{
+                const bd=cur.brands[b.id];
+                return (
+                  <div key={b.id} style={{marginBottom:10,border:`0.5px solid ${bd.active?b.color:"var(--border)"}`,borderRadius:"var(--radius)",overflow:"hidden"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:bd.active?b.bg:"transparent",cursor:"pointer"}}
+                      onClick={()=>updateBrand(editIdx,b.id,"active",!bd.active)}>
+                      <div style={{width:18,height:18,border:`1.5px solid ${bd.active?b.color:"var(--border2)"}`,borderRadius:4,background:bd.active?b.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                        {bd.active&&<i className="ti ti-check" style={{fontSize:10,color:"#fff"}} />}
+                      </div>
+                      <i className={`ti ${b.icon}`} style={{fontSize:15,color:bd.active?b.color:"var(--text3)"}} />
+                      <span style={{fontSize:13,fontWeight:500,color:bd.active?b.text:"var(--text2)"}}>{b.name}</span>
+                    </div>
+                    {bd.active&&(
+                      <div style={{padding:"10px 12px",borderTop:`0.5px solid ${b.color}22`,background:"#fafafa"}}>
+                        <label style={{fontSize:11,color:"var(--text2)",display:"block",marginBottom:4}}>Porcentaje de dedicación (ej. 60%)</label>
+                        <input value={bd.scope} onChange={e=>updateBrand(editIdx,b.id,"scope",e.target.value)} placeholder="Ej. 60%" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:"1rem"}}>
+              <button className="nav-btn" onClick={()=>setEditIdx(Math.max(0,editIdx-1))} disabled={editIdx===0}>
+                <i className="ti ti-arrow-left" style={{fontSize:13}} /> Anterior
+              </button>
+              <button className="nav-btn" onClick={()=>setEditIdx(Math.min(17,editIdx+1))} disabled={editIdx===17}>
+                Siguiente <i className="ti ti-arrow-right" style={{fontSize:13}} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p style={{marginTop:"3rem",fontSize:11,color:"var(--text3)",textAlign:"center"}}>
+        Equipo de Marketing · Global Cruises LLC · KUZÁ PARK · Adventugram
+      </p>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
